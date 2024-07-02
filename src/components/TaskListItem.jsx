@@ -9,14 +9,15 @@ const TaskListItem = ({ props , editIndex, editTaskName, setEditTaskName, saveTa
 
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: task.id });
 
+
+    // Item style on drag (in list)
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
         display: 'flex',
         alignItems: 'center',
-        cursor: 'grab',
         opacity: isDragging ? 0.5 : 1,
-        zIndex: isDragging ? 9999 : 'auto',
+        zIndex: isDragging ? -9999 : 'auto',
         background: isDragging ? '#f0f0f0' : 'white',
         border: isDragging ? '1px solid #ccc' : 'none',
         boxShadow: isDragging ? '0 4px 8px rgba(0,0,0,0.1)' : 'none',
@@ -25,7 +26,7 @@ const TaskListItem = ({ props , editIndex, editTaskName, setEditTaskName, saveTa
     };
 
     const handleEditClick = () => {
-        editTask(index); // Invoke editTask function with the index
+        editTask(index); 
     };
 
     return (

@@ -9,7 +9,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 class Task {
     constructor(name, isFinished = false) {
-        this.id = uuidv4(); // Generate a unique ID for each task
+        this.id = uuidv4(); 
         this.name = name;
         this.isFinished = isFinished;
     }
@@ -20,7 +20,7 @@ const TaskList = () => {
         const savedTasks = localStorage.getItem("tasks");
         if (savedTasks) {
             const parsedTasks = JSON.parse(savedTasks);
-            return parsedTasks.map(task => ({ ...task, id: task.id || uuidv4() })); // Ensure each task has a unique ID
+            return parsedTasks.map(task => ({ ...task, id: task.id || uuidv4() })); 
         }
         return [];
     });
@@ -29,9 +29,12 @@ const TaskList = () => {
     const [editTaskName, setEditTaskName] = useState("");
     const [activeId, setActiveId] = useState(null);
 
+    
     useEffect(() => {
         localStorage.setItem("tasks", JSON.stringify(taskList));
     }, [taskList]);
+
+    // Task adding, removing and editing
 
     const addTask = () => {
         if (newTaskName.trim()) {
@@ -62,6 +65,7 @@ const TaskList = () => {
         setTaskList(updatedTasks);
     };
 
+    // Drag and drop handling
     const sensors = useSensors(
         useSensor(PointerSensor, {
             activationConstraint: {
@@ -125,6 +129,7 @@ const TaskList = () => {
                             />
                         ))}
                     </SortableContext>
+                   
                     <DragOverlay>
                         {activeId !== null ? (
                             <div style={{
