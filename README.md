@@ -1,7 +1,7 @@
-# A basic To Do app in React
+# A simple to do app
 
-run it with:
+To start it run:
 ```bash
-$ yarn install
-$ npm start
+yarn install
+yarn start
 ```
