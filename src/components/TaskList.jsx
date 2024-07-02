@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from "react";
-import { ContainedList, Button, ContainedListItem, Checkbox, TextInput } from "@carbon/react";
-import { Add, Close, Edit, CheckmarkOutline } from '@carbon/icons-react';
+import { ContainedList, Button, TextInput } from "@carbon/react";
+import { Add } from '@carbon/icons-react';
 import TaskListItem from "./TaskListItem";
+import { DndContext, closestCenter, DragOverlay } from '@dnd-kit/core';
+import { arrayMove, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { useSensor, useSensors, PointerSensor } from '@dnd-kit/core';
+import { v4 as uuidv4 } from 'uuid';
 
 class Task {
     constructor(name, isFinished = false) {
+        this.id = uuidv4(); // Generate a unique ID for each task
         this.name = name;
         this.isFinished = isFinished;
     }
@@ -12,36 +17,17 @@ class Task {
 
 const TaskList = () => {
     const [taskList, setTaskList] = useState(() => {
-    const savedTasks = localStorage.getItem("tasks");
-    if (savedTasks) {
-        const parsedTasks = JSON.parse(savedTasks);
-        parsedTasks.map(task => new Task(task.name, task.isFinished));
-        return parsedTasks
-    }
-    return []
-    
-});
+        const savedTasks = localStorage.getItem("tasks");
+        if (savedTasks) {
+            const parsedTasks = JSON.parse(savedTasks);
+            return parsedTasks.map(task => ({ ...task, id: task.id || uuidv4() })); // Ensure each task has a unique ID
+        }
+        return [];
+    });
     const [newTaskName, setNewTaskName] = useState("");
     const [editIndex, setEditIndex] = useState(null);
     const [editTaskName, setEditTaskName] = useState("");
-
-
-    useEffect(() => {
-    const savedTasks = localStorage.getItem("tasks");
-    console.log('Loaded tasks: ', savedTasks);
-    if (savedTasks) {
-        const parsedTasks = JSON.parse(savedTasks);
-        setTaskList(parsedTasks.map(task => new Task(task.name, task.isFinished)));
-    }
-    }, []);
-
-
-    useEffect(() => {
-        const savedTasks = JSON.parse(localStorage.getItem("tasks"));
-        if (savedTasks) {
-            setTaskList(savedTasks);
-        }
-    }, []);
+    const [activeId, setActiveId] = useState(null);
 
     useEffect(() => {
         localStorage.setItem("tasks", JSON.stringify(taskList));
@@ -65,15 +51,40 @@ const TaskList = () => {
     };
 
     const saveTask = (index) => {
-        const updatedTasks = taskList.map((task, i) => i === index ? new Task(editTaskName, task.isFinished) : task);
+        const updatedTasks = taskList.map((task, i) => i === index ? { ...task, name: editTaskName } : task);
         setTaskList(updatedTasks);
         setEditIndex(null);
         setEditTaskName("");
     };
 
     const toggleTask = (index) => {
-        const updatedTasks = taskList.map((task, i) => i === index ? new Task(task.name, !task.isFinished) : task);
+        const updatedTasks = taskList.map((task, i) => i === index ? { ...task, isFinished: !task.isFinished } : task);
         setTaskList(updatedTasks);
+    };
+
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 5,
+            },
+        })
+    );
+
+    const handleDragStart = (event) => {
+        setActiveId(event.active.id);
+    };
+
+    const handleDragEnd = (event) => {
+        const { active, over } = event;
+        setActiveId(null);
+
+        if (active.id !== over.id) {
+            setTaskList((items) => {
+                const oldIndex = items.findIndex(item => item.id === active.id);
+                const newIndex = items.findIndex(item => item.id === over.id);
+                return arrayMove(items, oldIndex, newIndex);
+            });
+        }
     };
 
     return (
@@ -93,17 +104,47 @@ const TaskList = () => {
                     </>
                 }
             >
-                {taskList.map((task, i) => (
-                    <TaskListItem props={{task, i}} 
-                    toggleTask={toggleTask}
-                    editIndex={editIndex}
-                    editTaskName={editTaskName}
-                    setEditTaskName={setEditTaskName}
-                    saveTask={saveTask}
-                    editTask={editTask}
-                    removeTask={removeTask}
-                    />
-                ))}
+                <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragStart={handleDragStart}
+                    onDragEnd={handleDragEnd}
+                >
+                    <SortableContext items={taskList.map(task => task.id)} strategy={verticalListSortingStrategy}>
+                        {taskList.map((task, index) => (
+                            <TaskListItem
+                                key={task.id}
+                                props={{ task, index }}
+                                toggleTask={() => toggleTask(index)}
+                                editIndex={editIndex}
+                                editTaskName={editTaskName}
+                                setEditTaskName={setEditTaskName}
+                                saveTask={() => saveTask(index)}
+                                editTask={() => editTask(index)}
+                                removeTask={() => removeTask(index)}
+                            />
+                        ))}
+                    </SortableContext>
+                    <DragOverlay>
+                        {activeId !== null ? (
+                            <div style={{
+                                padding: '16px',
+                                backgroundColor: 'white',
+                                border: '1px solid black',
+                                borderRadius: '4px',
+                                boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+                                transform: 'scale(1.05)',
+                                transition: 'transform 0.2s ease',
+                                display: 'flex',
+                                alignItems: 'center',
+                                cursor: 'grabbing',
+                                opacity: 0.8
+                            }}>
+                                {taskList.find(task => task.id === activeId)?.name}
+                            </div>
+                        ) : null}
+                    </DragOverlay>
+                </DndContext>
             </ContainedList>
         </div>
     );
