@@ -26,18 +26,35 @@
   margin: auto;
 }
 
-// .taskListItem {
-//     display: flex;
-//     align-items: center; /* Vertical center alignment */
-//     justify-content: space-between; /* Adjust as needed */
-//     padding: 8px; /* Optional: Add padding for better spacing */
-// }
+.cds--text-input__field-wrapper{
+  position: relative;
+  height: 100%;
+  top: 50%;
+  -webkit-transform: translateY(-50%);
+  -ms-transform: translateY(-50%);
+  transform: translateY(-50%);
+}
 
-.checkbox {
+.cds--text-input{
   height: 100%;
 }
 
-.cds--contained-list-item__content{
-  display: flex;
-  align-items: center;
+div.ul{
+  margin-top: 20px;
+}
+
+.cds--checkbox-label{
+  position: absolute;
+  height: 100%;
+  top: 25%;
+}
+
+.cds--checkbox{
+  position: absolute;
+  height: 100%;
+  top: 25%;
+}
+
+.checkbox{
+  position: relative;
 }
